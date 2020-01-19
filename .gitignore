@@ -11,3 +11,4 @@ yarn-error.log
 .idea/
 
 deploy.php
+/public/storage
