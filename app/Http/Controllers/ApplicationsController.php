@@ -9,6 +9,7 @@ use App\Application;
 use App\Server;
 use App\Alias;
 use Helper;
+use Illuminate\Support\Str;
 use PDF;
 
 class ApplicationsController extends Controller
@@ -63,11 +64,11 @@ class ApplicationsController extends Controller
             return abort(403);
         }
 
-
-        $code   = hash('crc32', uniqid()).str_random(2);
-        $pass   = str_random(32);
+        $user = $server->user;
+        $pass = $server->password;
+        $dbname = $server->user . '_' . Str::slug($request->domain, '_');
         $dbpass = str_random(16);
-        $appcode= sha1(uniqid().microtime().$request->name);
+        $appcode = sha1(uniqid().microtime().$request->name);
 
 
         $autoinstall = $request->autoinstall;
@@ -94,7 +95,9 @@ class ApplicationsController extends Controller
 
 
         $ssh->setTimeout(360);
-        $response = $ssh->exec('echo '.$server->password.' | sudo -S sudo sh /cipi/host-add.sh -d '.$request->domain.' -u '.$code.' -p '.$pass.' -dbp '.$dbpass.' -b '.$base.' -ai '.$autoinstall);
+        $response = $ssh->exec(
+            "echo {$server->password} | sudo -S sudo sh /cipi/host-add.sh -d {$request->domain} -u {$user} -dbn {$dbname} -dbp {$dbpass} -b {$base} -ai {$autoinstall}"
+        );
 
 
         if(strpos($response, '###CIPI###') === false) {
@@ -113,8 +116,9 @@ class ApplicationsController extends Controller
         Application::create([
             'domain'        => $request->domain,
             'server_id'     => $request->server_id,
-            'username'      => $code,
+            'username'      => 'cipi',
             'password'      => $pass,
+            'dbname'        => $dbname,
             'dbpass'        => $dbpass,
             'basepath'      => $base,
             'autoinstall'   => $autoinstall,
@@ -122,10 +126,10 @@ class ApplicationsController extends Controller
         ]);
 
         $app = [
-            'user'          => $code,
+            'user'          => 'cipi',
             'pass'          => $pass,
-            'dbname'        => $code,
-            'dbuser'        => $code,
+            'dbname'        => $dbname,
+            'dbuser'        => $dbname,
             'dbpass'        => $dbpass,
             'path'          => $base,
             'autoinstall'   => $autoinstall,

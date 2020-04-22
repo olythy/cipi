@@ -50,9 +50,10 @@ class ServersController extends Controller
             'location'  => $request->location,
             'ip'        => $request->ip,
             'port'      => 22,
-            'username'  => uniqid().hash('crc32', str_random(64)),
+//            'username'  => uniqid().hash('crc32', str_random(64)),
+            'username'  => 'cipi',
             'password'  => str_random(64),
-            'dbroot'    => str_random(48),
+            'dbroot'    => 'cipi',
             'servercode'=> md5(uniqid().microtime().$request->name),
         ]);
 

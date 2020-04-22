@@ -22,9 +22,9 @@ while [ -n "$1" ] ; do
                     shift
                     USER_NAME=$1
                     ;;
-            -p | --pass )
+            -dbn | --dbname )
                     shift
-                    PASSWORD=$1
+                    DBNAME=$1
                     ;;
             -dbp | --dbpass )
                     shift
@@ -55,35 +55,35 @@ if [ "$AUTO_INSTALL" = "wordpress" ]; then
 fi
 
 #CREATE USER
-isUserExits(){
-    grep $1 /etc/passwd > /dev/null
-    [ $? -eq 0 ] && return $TRUE || return $FALSE
-}
+#isUserExits(){
+#    grep $1 /etc/passwd > /dev/null
+#    [ $? -eq 0 ] && return $TRUE || return $FALSE
+#}
+#
+#if ( ! isUserExits $USER_NAME )
+#    then
+#        sudo useradd -m -s $USER_SHELL -d /home/$USER_NAME -G www-data $USER_NAME
+#        echo "$USER_NAME:$PASSWORD"|chpasswd
+#    sudo chmod o-r /home/$USER_NAME
+#    else
+#        echo "Error: Retry to run this script!"
+#        exit 1
+#fi
 
-if ( ! isUserExits $USER_NAME )
-    then
-        sudo useradd -m -s $USER_SHELL -d /home/$USER_NAME -G www-data $USER_NAME
-        echo "$USER_NAME:$PASSWORD"|chpasswd
-    sudo chmod o-r /home/$USER_NAME
-    else
-        echo "Error: Retry to run this script!"
-        exit 1
-fi
-
-mkdir /home/$USER_NAME/web
+mkdir /home/$USER_NAME/$DOMAIN/web
 chown -R $USER_NAME:$USER_NAME /home/$USER_NAME
 
-CONF=/etc/apache2/sites-available/$USER_NAME.conf
+CONF=/etc/apache2/sites-available/$USER_NAME_$DOAMIN.conf
 touch $CONF
 
-mkdir /home/$USER_NAME/web/$BASE_PATH
+mkdir /home/$USER_NAME/$DOMAIN/web/$BASE_PATH
 cat > "$CONF" <<EOF
 <VirtualHost *:80>
     ServerName $DOMAIN
         ServerAdmin webmaster@localhost
-        DocumentRoot /home/$USER_NAME/web/$BASE_PATH
-        ErrorLog /home/$USER_NAME/error.log
-        CustomLog /home/$USER_NAME/access.log combined
+        DocumentRoot /home/$USER_NAME/$DOMAIN/web/$BASE_PATH
+        ErrorLog /home/$USER_NAME/$DOMAIN/error.log
+        CustomLog /home/$USER_NAME/$DOMAIN/access.log combined
         <Directory />
                 Order allow,deny
                 Options FollowSymLinks
@@ -92,7 +92,7 @@ cat > "$CONF" <<EOF
                 Require all granted
                 SetOutputFilter DEFLATE
         </Directory>
-        <Directory /home/$USER_NAME/web/$BASE_PATH>
+        <Directory /home/$USER_NAME/$DOMAIN/web/$BASE_PATH>
                 Order allow,deny
                 Options FollowSymLinks
                 Allow from all
@@ -103,7 +103,7 @@ cat > "$CONF" <<EOF
 </VirtualHost>
 EOF
 
-HTACCESS=/home/$USER_NAME/web/$BASE_PATH/.htaccess
+HTACCESS=/home/$USER_NAME/$DOMAIN/web/$BASE_PATH/.htaccess
 sudo touch $HTACCESS
 sudo cat > "$HTACCESS" <<EOF
 <IfModule mod_rewrite.c>
@@ -116,7 +116,7 @@ RewriteRule . /index.php [L]
 </IfModule>
 EOF
 
-BASE=/home/$USER_NAME/web/$BASE_PATH/index.php
+BASE=/home/$USER_NAME/$DOMAIN/web/$BASE_PATH/index.php
 sudo touch $BASE
 sudo cat > "$BASE" <<EOF
 <!doctype html>
@@ -285,13 +285,12 @@ sudo cat > "$BASE" <<EOF
 EOF
 
 #RESTART
-sudo a2ensite $USER_NAME.conf
+sudo a2ensite $USER_NAME_$DOMAIN.conf
 sudo systemctl restart apache2
 sudo service apache2 restart
 
 #MYSQL USER AND DB
-DBNAME=$USER_NAME
-DBUSER=$USER_NAME
+DBUSER=$DBNAME
 /usr/bin/mysql -u root -p$DBROOT <<EOF
 CREATE DATABASE IF NOT EXISTS $DBNAME;
 CREATE USER $DBUSER@'localhost' IDENTIFIED BY '$DBPASS';
@@ -306,21 +305,21 @@ echo "###CIPI###Ok"
 
 #LARAVEL
 if [ "$AUTO_INSTALL" = "laravel" ]; then
-    rm -rf $/home/$USER_NAME/web/laravel
-    composer create-project laravel/laravel /home/$USER_NAME/web/laravel
-    cd /home/$USER_NAME/web/laravel
+    rm -rf $/home/$USER_NAME/$DOMAIN/web/laravel
+    composer create-project laravel/laravel /home/$USER_NAME/$DOMAIN/web/laravel
+    cd /home/$USER_NAME/$DOMAIN/web/laravel
     find . -type f -exec chmod 644 {} \;
     find . -type d -exec chmod 755 {} \;
-    chmod 777 -R /home/$USER_NAME/web/laravel/storage
-    sudo rpl -q "DB_DATABASE=laravel" "DB_DATABASE=$DBNAME" /home/$USER_NAME/web/laravel/.env
-    sudo rpl -q "DB_USERNAME=root" "DB_USERNAME=$DBUSER" /home/$USER_NAME/web/laravel/.env
-    sudo rpl -q "DB_PASSWORD=" "DB_PASSWORD=$DBPASS" /home/$USER_NAME/web/laravel/.env
-    sudo chown -R $USER_NAME:$USER_NAME /home/$USER_NAME/web/
+    chmod 777 -R /home/$USER_NAME/$DOMAIN/web/laravel/storage
+    sudo rpl -q "DB_DATABASE=laravel" "DB_DATABASE=$DBNAME" /home/$USER_NAME/$DOMAIN/web/laravel/.env
+    sudo rpl -q "DB_USERNAME=root" "DB_USERNAME=$DBUSER" /home/$USER_NAME/$DOMAIN/web/laravel/.env
+    sudo rpl -q "DB_PASSWORD=" "DB_PASSWORD=$DBPASS" /home/$USER_NAME/$DOMAIN/web/laravel/.env
+    sudo chown -R $USER_NAME:$USER_NAME /home/$USER_NAME/$DOMAIN/web/
 fi
 
 #WORDPRESS
 if [ "$AUTO_INSTALL" = "wordpress" ]; then
-    cd /home/$USER_NAME/web/
+    cd /home/$USER_NAME/$DOMAIN/web/
     rm -rf $BASE_PATH
     composer create-project johnpbloch/wordpress .
     WPSalts=$(wget https://api.wordpress.org/secret-key/1.1/salt/ -q -O -)
@@ -362,15 +361,15 @@ fi
 
 #GIT INIT
 if [ "$AUTO_INSTALL" = "git" ]; then
-    sudo mkdir /home/$USER_NAME/git/
-    sudo cp /cipi/github /home/$USER_NAME/git/deploy
-    sudo cp /cipi/github.pub /home/$USER_NAME/git/deploy.pub
-    sudo cp /cipi/deploy.sh /home/$USER_NAME/git/deploy.sh
-    sudo rpl -q "###CIPI-USER###" "$USER_NAME" /home/$USER_NAME/git/deploy.sh
-    sudo chown -R $USER_NAME:$USER_NAME /home/$USER_NAME/git/
-    sudo chown -R $USER_NAME:$USER_NAME /home/$USER_NAME/web/
+    sudo mkdir /home/$USER_NAME/$DOMAIN/git/
+    sudo cp /cipi/github /home/$USER_NAME/$DOMAIN/git/deploy
+    sudo cp /cipi/github.pub /home/$USER_NAME/$DOMAIN/git/deploy.pub
+    sudo cp /cipi/deploy.sh /home/$USER_NAME/$DOMAIN/git/deploy.sh
+    sudo rpl -q "###CIPI-USER###" "$USER_NAME" /home/$USER_NAME/$DOMAIN/git/deploy.sh
+    sudo chown -R $USER_NAME:$USER_NAME /home/$USER_NAME/$DOMAIN/git/
+    sudo chown -R $USER_NAME:$USER_NAME /home/$USER_NAME/$DOMAIN/web/
 fi
 
 #PERMISSIONS
-chown -R $USER_NAME:$USER_NAME /home/$USER_NAME/web/
-chown -R $USER_NAME:$USER_NAME /home/$USER_NAME/web/$BASE_PATH/
+# chown -R $USER_NAME:$USER_NAME /home/$USER_NAME/$DOMAIN/web/
+# chown -R $USER_NAME:$USER_NAME /home/$USER_NAME/$DOMAIN/web/$BASE_PATH/
