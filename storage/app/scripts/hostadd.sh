@@ -70,13 +70,13 @@ fi
 #        exit 1
 #fi
 
-mkdir /home/$USER_NAME/$DOMAIN/web
+mkdir -p /home/$USER_NAME/$DOMAIN/web
 chown -R $USER_NAME:$USER_NAME /home/$USER_NAME
 
 CONF=/etc/apache2/sites-available/$USER_NAME_$DOAMIN.conf
 touch $CONF
 
-mkdir /home/$USER_NAME/$DOMAIN/web/$BASE_PATH
+mkdir -p /home/$USER_NAME/$DOMAIN/web/$BASE_PATH
 cat > "$CONF" <<EOF
 <VirtualHost *:80>
     ServerName $DOMAIN
@@ -361,7 +361,7 @@ fi
 
 #GIT INIT
 if [ "$AUTO_INSTALL" = "git" ]; then
-    sudo mkdir /home/$USER_NAME/$DOMAIN/git/
+    sudo mkdir -p /home/$USER_NAME/$DOMAIN/git/
     sudo cp /cipi/github /home/$USER_NAME/$DOMAIN/git/deploy
     sudo cp /cipi/github.pub /home/$USER_NAME/$DOMAIN/git/deploy.pub
     sudo cp /cipi/deploy.sh /home/$USER_NAME/$DOMAIN/git/deploy.sh
