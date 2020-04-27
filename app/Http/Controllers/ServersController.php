@@ -2,13 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Str;
-use Illuminate\Http\Request;
-use Illuminate\Routing\UrlGenerator;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use App\Server;
 use App\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class ServersController extends Controller
 {
@@ -50,10 +48,9 @@ class ServersController extends Controller
             'location'  => $request->location,
             'ip'        => $request->ip,
             'port'      => 22,
-//            'username'  => uniqid().hash('crc32', str_random(64)),
             'username'  => 'cipi',
-            'password'  => str_random(64),
-            'dbroot'    => 'cipi',
+            'password'  => Str::random(64),
+            'dbroot'    => uniqid().hash('crc32', Str::random(64)),
             'servercode'=> md5(uniqid().microtime().$request->name),
         ]);
 

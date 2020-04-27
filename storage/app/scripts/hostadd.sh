@@ -73,7 +73,7 @@ fi
 mkdir -p /home/$USER_NAME/$DOMAIN/web
 chown -R $USER_NAME:$USER_NAME /home/$USER_NAME
 
-CONF=/etc/apache2/sites-available/$USER_NAME_$DOAMIN.conf
+CONF=/etc/apache2/sites-available/$USER_NAME-$DOMAIN.conf
 touch $CONF
 
 mkdir -p /home/$USER_NAME/$DOMAIN/web/$BASE_PATH
@@ -285,7 +285,7 @@ sudo cat > "$BASE" <<EOF
 EOF
 
 #RESTART
-sudo a2ensite $USER_NAME_$DOMAIN.conf
+sudo a2ensite $USER_NAME-   $DOMAIN.conf
 sudo systemctl restart apache2
 sudo service apache2 restart
 

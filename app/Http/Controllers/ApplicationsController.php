@@ -67,7 +67,7 @@ class ApplicationsController extends Controller
         $user = $server->username;
         $pass = $server->password;
         $dbname = $user . '_' . Str::slug($request->domain, '_');
-        $dbpass = str_random(16);
+        $dbpass = Str::random(16);
         $appcode = sha1(uniqid().microtime().$request->name);
 
 

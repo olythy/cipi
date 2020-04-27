@@ -8,7 +8,7 @@ class Application extends Model
 {
 
 	protected $fillable = [
-		'domain', 'server_id', 'username', 'password', 'dbpass', 'basepath', 'autoinstall', 'appcode',
+		'domain', 'server_id', 'username', 'password', 'dbname', 'dbpass', 'basepath', 'autoinstall', 'appcode',
     ];
 
 
