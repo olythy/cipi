@@ -73,41 +73,43 @@ class AliasesController extends Controller
             return view('generic', compact('profile','messagge'));
         }
 
-        Storage::disk('local')->put('public/'.$application->username.'.conf', '');
-        Storage::disk('local')->append('public/'.$application->username.'.conf', '<VirtualHost *:80>');
-        Storage::disk('local')->append('public/'.$application->username.'.conf', '    ServerName '.$application->domain);
+        $configFile = "{$application->username}-{$application->domain}";
+
+        Storage::disk('local')->put('public/'.$configFile.'.conf', '');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '<VirtualHost *:80>');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '    ServerName '.$application->domain);
         foreach ($application->aliases as $alias) {
-           Storage::disk('local')->append('public/'.$application->username.'.conf', '    ServerAlias '.$alias->domain);
+           Storage::disk('local')->append('public/'.$configFile.'.conf', '    ServerAlias '.$alias->domain);
         }
-        Storage::disk('local')->append('public/'.$application->username.'.conf', '    ServerAlias '.$request->domain);
-        Storage::disk('local')->append('public/'.$application->username.'.conf', '        ServerAdmin webmaster@localhost');
-        Storage::disk('local')->append('public/'.$application->username.'.conf', '        DocumentRoot /home/'.$application->username.'/web/'.$application->basepath);
-        Storage::disk('local')->append('public/'.$application->username.'.conf', '        <Directory />');
-        Storage::disk('local')->append('public/'.$application->username.'.conf', '                Order allow,deny');
-        Storage::disk('local')->append('public/'.$application->username.'.conf', '                Options FollowSymLinks');
-        Storage::disk('local')->append('public/'.$application->username.'.conf', '                Allow from all');
-        Storage::disk('local')->append('public/'.$application->username.'.conf', '                AllowOverRide All');
-        Storage::disk('local')->append('public/'.$application->username.'.conf', '                Require all granted');
-        Storage::disk('local')->append('public/'.$application->username.'.conf', '                SetOutputFilter DEFLATE');
-        Storage::disk('local')->append('public/'.$application->username.'.conf', '        </Directory>');
-        Storage::disk('local')->append('public/'.$application->username.'.conf', '        <Directory /home/'.$application->username.'/web/'.$application->basepath.'>');
-        Storage::disk('local')->append('public/'.$application->username.'.conf', '                Order allow,deny');
-        Storage::disk('local')->append('public/'.$application->username.'.conf', '                Options FollowSymLinks');
-        Storage::disk('local')->append('public/'.$application->username.'.conf', '                Allow from all');
-        Storage::disk('local')->append('public/'.$application->username.'.conf', '                AllowOverRide All');
-        Storage::disk('local')->append('public/'.$application->username.'.conf', '                Require all granted');
-        Storage::disk('local')->append('public/'.$application->username.'.conf', '                SetOutputFilter DEFLATE');
-        Storage::disk('local')->append('public/'.$application->username.'.conf', '        </Directory>');
-        Storage::disk('local')->append('public/'.$application->username.'.conf', '</VirtualHost>');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '    ServerAlias '.$request->domain);
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '        ServerAdmin webmaster@localhost');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '        DocumentRoot /home/'.$application->username.'/'.$application->domain.'/web/'.$application->basepath);
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '        <Directory />');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '                Order allow,deny');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '                Options FollowSymLinks');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '                Allow from all');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '                AllowOverRide All');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '                Require all granted');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '                SetOutputFilter DEFLATE');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '        </Directory>');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '        <Directory /home/'.$application->username.'/'.$application->domain.'/web/'.$application->basepath.'>');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '                Order allow,deny');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '                Options FollowSymLinks');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '                Allow from all');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '                AllowOverRide All');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '                Require all granted');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '                SetOutputFilter DEFLATE');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '        </Directory>');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '</VirtualHost>');
 
         $ssh->setTimeout(60);
-        $ssh->exec('echo '.$server->password.' | sudo -S unlink /etc/apache2/sites-available/'.$application->username.'.conf');
-        $ssh->exec('echo '.$server->password.' | sudo -S wget '.env('APP_URL').'/storage/'.$application->username.'.conf  -O /etc/apache2/sites-available/'.$application->username.'.conf');
-        $ssh->exec('echo '.$server->password.' | sudo -S a2ensite '.$application->username.'.conf');
+        $ssh->exec('echo '.$server->password.' | sudo -S unlink /etc/apache2/sites-available/'.$configFile.'.conf');
+        $ssh->exec('echo '.$server->password.' | sudo -S wget '.env('APP_URL').'/storage/'.$configFile.'.conf  -O /etc/apache2/sites-available/'.$configFile.'.conf');
+        $ssh->exec('echo '.$server->password.' | sudo -S a2ensite '.$configFile.'.conf');
         $ssh->exec('echo '.$server->password.' | sudo -S service apache2 reload');
         $ssh->exec('echo '.$server->password.' | sudo -S systemctl reload apache2');
 
-        Storage::disk('local')->delete('public/'.$application->username.'.conf');
+        Storage::disk('local')->delete('public/'.$configFile.'.conf');
 
         Alias::create([
             'domain'          => $request->domain,
@@ -152,46 +154,46 @@ class AliasesController extends Controller
             return view('generic', compact('profile','messagge'));
         }
 
-        Storage::disk('local')->put('public/'.$alias->application->username.'.conf', '');
-        Storage::disk('local')->append('public/'.$alias->application->username.'.conf', '<VirtualHost *:80>');
-        Storage::disk('local')->append('public/'.$alias->application->username.'.conf', '    ServerName '.$alias->application->domain);
+        $configFile = "{$alias->application->username}-{$alias->application->domain}";
+
+        Storage::disk('local')->put('public/'.$configFile.'.conf', '');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '<VirtualHost *:80>');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '    ServerName '.$alias->application->domain);
         foreach ($alias->application->aliases as $alias) {
-           Storage::disk('local')->append('public/'.$alias->application->username.'.conf', '    ServerAlias '.$alias->domain);
+           Storage::disk('local')->append('public/'.$configFile.'.conf', '    ServerAlias '.$alias->domain);
         }
-        Storage::disk('local')->append('public/'.$alias->application->username.'.conf', '        ServerAdmin webmaster@localhost');
-        Storage::disk('local')->append('public/'.$alias->application->username.'.conf', '        DocumentRoot /home/'.$alias->application->username.'/web/'.$alias->application->basepath);
-        Storage::disk('local')->append('public/'.$alias->application->username.'.conf', '        <Directory />');
-        Storage::disk('local')->append('public/'.$alias->application->username.'.conf', '                Order allow,deny');
-        Storage::disk('local')->append('public/'.$alias->application->username.'.conf', '                Options FollowSymLinks');
-        Storage::disk('local')->append('public/'.$alias->application->username.'.conf', '                Allow from all');
-        Storage::disk('local')->append('public/'.$alias->application->username.'.conf', '                AllowOverRide All');
-        Storage::disk('local')->append('public/'.$alias->application->username.'.conf', '                Require all granted');
-        Storage::disk('local')->append('public/'.$alias->application->username.'.conf', '                SetOutputFilter DEFLATE');
-        Storage::disk('local')->append('public/'.$alias->application->username.'.conf', '        </Directory>');
-        Storage::disk('local')->append('public/'.$alias->application->username.'.conf', '        <Directory /home/'.$alias->application->username.'/web/'.$alias->application->basepath.'>');
-        Storage::disk('local')->append('public/'.$alias->application->username.'.conf', '                Order allow,deny');
-        Storage::disk('local')->append('public/'.$alias->application->username.'.conf', '                Options FollowSymLinks');
-        Storage::disk('local')->append('public/'.$alias->application->username.'.conf', '                Allow from all');
-        Storage::disk('local')->append('public/'.$alias->application->username.'.conf', '                AllowOverRide All');
-        Storage::disk('local')->append('public/'.$alias->application->username.'.conf', '                Require all granted');
-        Storage::disk('local')->append('public/'.$alias->application->username.'.conf', '                SetOutputFilter DEFLATE');
-        Storage::disk('local')->append('public/'.$alias->application->username.'.conf', '        </Directory>');
-        Storage::disk('local')->append('public/'.$alias->application->username.'.conf', '</VirtualHost>');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '        ServerAdmin webmaster@localhost');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '        DocumentRoot /home/'.$alias->application->username.'/'.$alias->application->domain.'/web/'.$alias->application->basepath);
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '        <Directory />');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '                Order allow,deny');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '                Options FollowSymLinks');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '                Allow from all');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '                AllowOverRide All');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '                Require all granted');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '                SetOutputFilter DEFLATE');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '        </Directory>');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '        <Directory /home/'.$alias->application->username.'/'.$alias->application->domain.'/web/'.$alias->application->basepath.'>');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '                Order allow,deny');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '                Options FollowSymLinks');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '                Allow from all');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '                AllowOverRide All');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '                Require all granted');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '                SetOutputFilter DEFLATE');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '        </Directory>');
+        Storage::disk('local')->append('public/'.$configFile.'.conf', '</VirtualHost>');
 
         $ssh->setTimeout(60);
-        $ssh->exec('echo '.$alias->server->password.' | sudo -S unlink /etc/apache2/sites-available/'.$alias->application->username.'.conf');
-        $ssh->exec('echo '.$alias->server->password.' | sudo -S wget '.env('APP_URL').'/storage/'.$alias->application->username.'.conf  -O /etc/apache2/sites-available/'.$alias->application->username.'.conf');
-        $ssh->exec('echo '.$alias->server->password.' | sudo -S a2ensite '.$alias->application->username.'.conf');
+        $ssh->exec('echo '.$alias->server->password.' | sudo -S unlink /etc/apache2/sites-available/'.$configFile.'.conf');
+        $ssh->exec('echo '.$alias->server->password.' | sudo -S wget '.env('APP_URL').'/storage/'.$configFile.'.conf  -O /etc/apache2/sites-available/'.$configFile.'.conf');
+        $ssh->exec('echo '.$alias->server->password.' | sudo -S a2ensite '.$configFile.'.conf');
         $ssh->exec('echo '.$alias->server->password.' | sudo -S unlink /etc/cron.d/certbot_renew_'.$alias->domain.'.crontab');
         $ssh->exec('echo '.$alias->server->password.' | sudo -S unlink /cipi/certbot_renew_'.$alias->domain.'.sh');
         $ssh->exec('echo '.$alias->server->password.' | sudo -S service apache2 reload');
         $ssh->exec('echo '.$alias->server->password.' | sudo -S systemctl reload apache2');
 
-        Storage::disk('local')->delete('public/'.$alias->application->username.'.conf');
+        Storage::disk('local')->delete('public/'.$configFile.'.conf');
 
         return redirect()->route('aliases');
 
     }
-
-
 }
